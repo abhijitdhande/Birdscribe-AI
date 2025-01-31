@@ -1,0 +1,14 @@
+{
+    "name": "Birdscribe AI",
+    "description": "Birdscribe AI is a tool that helps you analyze bird images using advanced AI technology.",
+    "version": "1.0.0",
+    "manifest_version": 3,
+    "action": {
+        "default_popup": "./index.html",
+        "default_title": "Birdscribe AI"
+    },
+    "permissions": ["activeTab"],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self'"
+    }
+}
