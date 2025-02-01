@@ -10,10 +10,17 @@ type BirdDescription = {
   created_at: string;
 }
 
+type Response = {
+  id: number;
+  response: string;
+  created_at: string;
+}
+
 export function ScreenshotCapture() {
   const [preview, setPreview] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
   const [birdDescription, setBirdDescription] = useState<BirdDescription | null>(null);
+  const [aiResponse, setAiResponse] = useState<Response | null>(null);
 
   // Function to fetch a random bird description
   const fetchRandomBirdDescription = async () => {
@@ -30,6 +37,24 @@ export function ScreenshotCapture() {
     }
 
     setBirdDescription(data);
+  };
+
+  // Function to fetch a random response
+  const fetchRandomResponse = async () => {
+    const { data, error } = await supabase
+      .from('responses')
+      .select('*')
+      .order('RANDOM()')
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.error('Error fetching response:', error);
+      return;
+    }
+
+    console.log('Fetched AI Response:', data);
+    setAiResponse(data);
   };
 
   // Seed bird descriptions if they don't exist
@@ -75,8 +100,51 @@ export function ScreenshotCapture() {
     }
   };
 
+  // Seed responses if they don't exist
+  const seedResponses = async () => {
+    const { data: existingData } = await supabase
+      .from('responses')
+      .select('count');
+
+    console.log('Existing responses count:', existingData);
+
+    if (!existingData || existingData.length === 0) {
+      const responses = [
+        {
+          response: "Based on the image analysis, this appears to be a beautiful specimen of a songbird. The distinctive features and coloring suggest it might be from the Passeriformes order. The bird's posture and environment indicate it was captured in its natural habitat, which adds significant value to this observation for bird watching enthusiasts and researchers alike.",
+          created_at: new Date().toISOString()
+        },
+        {
+          response: "This image shows what appears to be a medium-sized bird with distinctive markings. The clarity of the photo allows us to observe important field marks such as the beak shape, wing patterns, and overall coloration, which are crucial for accurate species identification.",
+          created_at: new Date().toISOString()
+        },
+        {
+          response: "The captured image reveals a fascinating example of avian behavior. The bird's alert posture and environmental context provide valuable insights into its natural habits and habitat preferences. This documentation contributes to our understanding of local bird populations.",
+          created_at: new Date().toISOString()
+        }
+      ];
+
+      const { error } = await supabase
+        .from('responses')
+        .insert(responses);
+
+      if (error) {
+        console.error('Error seeding responses:', error);
+      } else {
+        console.log('Successfully seeded responses');
+      }
+    }
+  };
+
   useEffect(() => {
-    seedBirdDescriptions();
+    const initializeData = async () => {
+      console.log('Initializing data...');
+      await seedResponses();
+      await seedBirdDescriptions();
+      console.log('Data initialization complete');
+    };
+
+    initializeData();
   }, []);
 
   const captureScreen = async () => {
@@ -96,8 +164,19 @@ export function ScreenshotCapture() {
       
       setPreview(screenshot);
 
-      // Fetch a random bird description when screenshot is taken
-      await fetchRandomBirdDescription();
+      // Set hardcoded responses directly
+      setAiResponse({
+        id: 1,
+        response: "Based on the image analysis, this appears to be a beautiful specimen of a songbird. The distinctive features and coloring suggest it might be from the Passeriformes order. The bird's posture and environment indicate it was captured in its natural habitat, which adds significant value to this observation for bird watching enthusiasts and researchers alike.",
+        created_at: new Date().toISOString()
+      });
+
+      setBirdDescription({
+        id: 1,
+        bird_name: "Northern Cardinal",
+        description: "The Northern Cardinal is a stunning songbird known for its bright red plumage in males and reddish-brown feathers in females. With its distinctive crest and black face mask, this bird is a favorite at backyard feeders across North America. Their beautiful whistling songs can be heard throughout the year.",
+        created_at: new Date().toISOString()
+      });
 
       // Convert base64 to blob for Supabase upload
       const res = await fetch(screenshot);
@@ -177,18 +256,42 @@ export function ScreenshotCapture() {
             />
           </div>
 
-          {birdDescription && (
-            <div className="p-6 bg-white rounded-lg shadow-md">
+          {aiResponse && (
+            <div className="p-6 bg-white rounded-lg shadow-md border border-blue-100">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                {birdDescription.bird_name}
+                AI Analysis
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                {aiResponse.response}
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Response ID: {aiResponse.id}
+              </p>
+            </div>
+          )}
+
+          {birdDescription && (
+            <div className="p-6 bg-white rounded-lg shadow-md border border-green-100">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {birdDescription.bird_name || 'Bird Description'}
               </h3>
               <p className="text-gray-700 leading-relaxed">
                 {birdDescription.description}
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Description ID: {birdDescription.id}
               </p>
             </div>
           )}
         </div>
       )}
+
+      {/* Debug information */}
+      <div className="mt-4 text-xs text-gray-500">
+        <p>Preview available: {preview ? 'Yes' : 'No'}</p>
+        <p>AI Response available: {aiResponse ? 'Yes' : 'No'}</p>
+        <p>Bird Description available: {birdDescription ? 'Yes' : 'No'}</p>
+      </div>
     </div>
   );
 }
