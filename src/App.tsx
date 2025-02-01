@@ -1,5 +1,5 @@
 import { Bird } from 'lucide-react';
-import { ScreenshotCapture } from './components/ImageUpload';
+import { ImageUpload } from './components/ImageUpload';
 
 export default function App() {
   return (
@@ -11,11 +11,11 @@ export default function App() {
             <h1 className="text-4xl font-bold text-gray-900">Birdscribe AI</h1>
           </div>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Take and analyze screenshots of birds with our advanced AI technology
+            Upload and analyze bird images with our advanced AI technology
           </p>
         </div>
 
-        <ScreenshotCapture />
+        <ImageUpload />
       </div>
     </div>
   );
